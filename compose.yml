@@ -1,5 +1,5 @@
 services:
-  web:
+  faqs:
     build: .
     restart: always
     pull_policy: build

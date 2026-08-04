@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMIQ - Admin: Fragen verwalten</title>
+<style>
+    :root {
+        --ovgu-red: #7A003F;
+        --ovgu-dark: #333333;
+        --ovgu-light-grey: #f4f4f4;
+        --ovgu-border: #dddddd;
+        --font-family: 'Open Sans', Arial, sans-serif;
+        --ok-green: #2e7d32;
+        --warn-orange: #b26a00;
+    }
+
+    body {
+        font-family: var(--font-family);
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        color: var(--ovgu-dark);
+        background: var(--ovgu-light-grey);
+    }
+
+    header {
+        background-color: var(--ovgu-red);
+        color: white;
+        padding: 20px 0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .header-content {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .header-content h1 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+    }
+
+    .header-content p {
+        margin: 4px 0 0 0;
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 25px 20px 60px 20px;
+    }
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .filter-buttons button {
+        border: 1px solid var(--ovgu-border);
+        background: white;
+        padding: 8px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        margin-right: 6px;
+    }
+
+    .filter-buttons button.active {
+        background: var(--ovgu-red);
+        color: white;
+        border-color: var(--ovgu-red);
+    }
+
+    #searchInput {
+        padding: 10px 12px;
+        border: 1px solid var(--ovgu-border);
+        border-radius: 4px;
+        font-size: 0.9rem;
+        min-width: 240px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 16px;
+    }
+
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: bold;
+        padding: 3px 9px;
+        border-radius: 12px;
+        white-space: nowrap;
+    }
+
+    .status-answered {
+        background: #e6f4e6;
+        color: var(--ok-green);
+    }
+
+    .status-pending {
+        background: #fff3e0;
+        color: var(--warn-orange);
+    }
+
+    .meta {
+        font-size: 0.78rem;
+        color: #888;
+        margin-top: 4px;
+    }
+
+    label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #555;
+        margin: 12px 0 4px 0;
+    }
+
+    textarea, input[type="text"].edit-field {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--ovgu-border);
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-family: inherit;
+        font-size: 0.92rem;
+        resize: vertical;
+    }
+
+    textarea.question-field {
+        height: 55px;
+    }
+
+    textarea.answer-field {
+        height: 90px;
+    }
+
+    .card-actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    button.btn {
+        border: none;
+        padding: 9px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+
+    button.btn-save {
+        background-color: var(--ovgu-red);
+        color: white;
+    }
+    button.btn-save:hover { background-color: #5c002f; }
+
+    button.btn-delete {
+        background-color: white;
+        color: #b3261e;
+        border: 1px solid #b3261e;
+    }
+    button.btn-delete:hover { background: #fdecea; }
+
+    .empty-state {
+        text-align: center;
+        color: #888;
+        padding: 40px 0;
+    }
+
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--ovgu-dark);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.25s;
+        pointer-events: none;
+    }
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <h1>IMIQ – Fragen verwalten</h1>
+        <p>Interner Admin-Bereich · nicht öffentlich verlinkt</p>
+    </div>
+</header>
+
+<div class="container">
+    <div class="toolbar">
+        <div class="filter-buttons" id="filterButtons">
+            <button data-filter="all" class="active">Alle</button>
+            <button data-filter="pending">Unbeantwortet</button>
+            <button data-filter="answered">Beantwortet</button>
+        </div>
+        <input type="text" id="searchInput" placeholder="Suchen...">
+    </div>
+
+    <div id="list"><p>Lade Fragen...</p></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let faqs = [];
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    async function load() {
+        const res = await fetch('api/faqs');
+        faqs = await res.json();
+        render();
+    }
+
+    function isAnswered(f) {
+        return !!(f.answer && String(f.answer).trim().length > 0);
+    }
+
+    function formatDate(s) {
+        if (!s) return '';
+        return s.replace('T', ' ').slice(0, 16);
+    }
+
+    function render() {
+        const list = document.getElementById('list');
+        let items = faqs.slice();
+
+        if (currentFilter === 'pending') items = items.filter(f => !isAnswered(f));
+        if (currentFilter === 'answered') items = items.filter(f => isAnswered(f));
+        if (currentSearch) {
+            const t = currentSearch.toLowerCase();
+            items = items.filter(f =>
+                f.question.toLowerCase().includes(t) ||
+                (f.answer || '').toLowerCase().includes(t)
+            );
+        }
+
+        if (items.length === 0) {
+            list.innerHTML = '<div class="empty-state">Keine Fragen gefunden.</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        items.forEach(f => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            const answered = isAnswered(f);
+            card.innerHTML = `
+                <div class="card-top">
+                    <span class="status-badge ${answered ? 'status-answered' : 'status-pending'}">
+                        ${answered ? 'Beantwortet' : 'Unbeantwortet'}
+                    </span>
+                </div>
+                <div class="meta">#${f.id} · erstellt: ${formatDate(f.created_at)} · aktualisiert: ${formatDate(f.updated_at)}</div>
+
+                <label>Frage</label>
+                <textarea class="question-field" data-id="${f.id}" data-field="question">${escapeHtml(f.question)}</textarea>
+
+                <label>Antwort</label>
+                <textarea class="answer-field" data-id="${f.id}" data-field="answer" placeholder="Antwort eingeben, um die Frage zu veröffentlichen...">${escapeHtml(f.answer || '')}</textarea>
+
+                <div class="card-actions">
+                    <button class="btn btn-save" data-id="${f.id}">Speichern</button>
+                    <button class="btn btn-delete" data-id="${f.id}">Löschen</button>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+
+        list.querySelectorAll('.btn-save').forEach(btn => {
+            btn.onclick = () => saveFaq(btn.dataset.id);
+        });
+        list.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.onclick = () => deleteFaq(btn.dataset.id);
+        });
+    }
+
+    function escapeHtml(s) {
+        const div = document.createElement('div');
+        div.innerText = s;
+        return div.innerHTML;
+    }
+
+    async function saveFaq(id) {
+        const question = document.querySelector(`textarea[data-id="${id}"][data-field="question"]`).value.trim();
+        const answer = document.querySelector(`textarea[data-id="${id}"][data-field="answer"]`).value.trim();
+
+        if (!question) {
+            showToast('Frage darf nicht leer sein.');
+            return;
+        }
+
+        const res = await fetch(`api/faqs/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question, answer })
+        });
+
+        if (res.ok) {
+            showToast('Gespeichert.');
+            await load();
+        } else {
+            showToast('Fehler beim Speichern.');
+        }
+    }
+
+    async function deleteFaq(id) {
+        if (!confirm('Diese Frage wirklich unwiderruflich löschen?')) return;
+        const res = await fetch(`api/faqs/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            showToast('Gelöscht.');
+            await load();
+        } else {
+            showToast('Fehler beim Löschen.');
+        }
+    }
+
+    let toastTimer;
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    document.getElementById('filterButtons').addEventListener('click', (e) => {
+        if (e.target.tagName !== 'BUTTON') return;
+        document.querySelectorAll('#filterButtons button').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.filter;
+        render();
+    });
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        currentSearch = e.target.value;
+        render();
+    });
+
+    load();
+</script>
+
+</body>
+</html>

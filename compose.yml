@@ -5,6 +5,9 @@ services:
     pull_policy: build
     volumes:
       - data:/data
+    environment:
+      - ADMIN_SECRET=${ADMIN_SECRET}
+      - PATH_PREFIX=/faqs
 
 volumes:
   data:
